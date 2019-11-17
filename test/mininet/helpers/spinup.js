@@ -35,7 +35,7 @@ function spinup (size, { t, scenario, state, bs }) {
             tapenet.once('run-${i}', ($shared) => {
               state.$shared = $shared
               var doneCalled = false
-              run (t, null, state, () => {
+              run(t, null, state, () => {
                 if (doneCalled) return
                 doneCalled = true
                 tapenet.emit('ran-${i}')
@@ -74,7 +74,7 @@ function spinup (size, { t, scenario, state, bs }) {
             ...${JSON.stringify(options)} 
           })
           peer.start()
-          peer.on('ready', () => {
+          peer.once('ready', () => {
             tapenet.emit('peer-ready')
             state.$index = ${count}
             ready(t, peer, state, (err, nextState = state) => {
@@ -86,7 +86,7 @@ function spinup (size, { t, scenario, state, bs }) {
             tapenet.once('rebootstrap', () => {
               peer.node.ready = false
               peer.node._bootstrap(true)
-              peer.node.on('ready', () => {
+              peer.node.once('ready', () => {
                 tapenet.emit('peer-rebootstrapped')
               })
             })
@@ -108,7 +108,6 @@ function spinup (size, { t, scenario, state, bs }) {
             let count = 0
             tapenet.on('ran-${i}', () => {
               count++
-              console.log('RAN', ${i}, count)
               if (count === ${containers.length}) {
                 tapenet.emit('run-${i + 1}', state.$shared)
               }
@@ -128,7 +127,7 @@ function spinup (size, { t, scenario, state, bs }) {
 
 function mediate (t, h) {
   t.run(h, function () {
-    tapenet.on('bootstrap', (state, size) => {
+    tapenet.once('bootstrap', (state, size) => {
       state.$shared = state.$shared || {}
       const merge = require('lodash.mergewith')
       var readyCount = 0

@@ -26,7 +26,7 @@ function bootstrap ({ t, hosts, state = {}, size }) {
     tapenet.once('rebootstrap', () => {
       node.node.ready = false
       node.node._bootstrap(true)
-      node.node.on('ready', () => {
+      node.node.once('ready', () => {
         tapenet.emit('peer-rebootstrapped')
       })
     })
