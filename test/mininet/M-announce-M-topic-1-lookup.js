@@ -27,13 +27,13 @@ tapenet(`1 lookup peer, ${NODES - 2} announcing peers, ${NODES - 2} topics, ${RT
         const crypto = require('crypto')
         const topic = crypto.randomBytes(32).toString('hex')
         const { $shared, $index } = state
-        const { port } = peer.address()
+        const port = peer.conf.dht_port
         $shared.cfg[$index] = { host: ip, port }
         $shared.topics[$index] = topic
-        next(null, { ...state, topic })
+        next(null, { ...state, topic, port })
       },
-      run (t, peer, { topic }, done) {
-        peer.announce(topic, (err) => {
+      run (t, peer, { topic, port }, done) {
+        peer.announce(topic, port, (err) => {
           try {
             t.error(err, 'no announce error')
           } finally {
@@ -68,7 +68,7 @@ tapenet(`1 lookup peer, ${NODES - 2} announcing peers, ${NODES - 2} topics, ${RT
               const hasResult = peers.length > 0
               t.is(hasResult, true, 'lookup has a result')
               if (hasResult === false) return
-              const { port } = peer.address()
+              const port = peer.conf.dht_port
               const expected = new Set([
                 ...bootstrap,
                 // the lookup node is non-ephemeral, so

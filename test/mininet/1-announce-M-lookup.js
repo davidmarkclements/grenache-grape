@@ -20,11 +20,11 @@ tapenet(`1 announcing peer, ${NODES - 2} lookup peers, ${RTS} lookups per peer`,
       ready (t, peer, state, next) {
         const crypto = require('crypto')
         const topic = crypto.randomBytes(32).toString('hex')
-        const { port } = peer.address()
+        const port = peer.conf.dht_port
         next(null, { ...state, announcerPort: port, topic })
       },
-      run (t, peer, { topic }, done) {
-        peer.announce(topic, (err) => {
+      run (t, peer, { topic, announcerPort }, done) {
+        peer.announce(topic, announcerPort, (err) => {
           try {
             t.error(err, 'no announce error')
           } finally {

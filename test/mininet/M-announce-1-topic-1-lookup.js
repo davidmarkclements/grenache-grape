@@ -25,12 +25,12 @@ tapenet(`1 lookup peer, ${NODES - 2} announcing peers, ${RTS} lookups, same topi
       containers: announcers,
       ready (t, peer, state, next) {
         const { $shared, $index } = state
-        const { port } = peer.address()
+        const port = peer.conf.dht_port
         $shared.cfg[$index] = { host: ip, port }
-        next(null, state)
+        next(null, {...state, port})
       },
-      run (t, peer, { topic }, done) {
-        peer.announce(topic, (err) => {
+      run (t, peer, { topic, port }, done) {
+        peer.announce(topic, port, (err) => {
           try {
             t.error(err, 'no announce error')
           } finally {

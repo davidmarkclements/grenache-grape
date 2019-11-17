@@ -34,13 +34,13 @@ tapenet(`${lookups.length} lookup peers, ${announcers.length} announcing peers (
         const crypto = require('crypto')
         const topic = crypto.randomBytes(32).toString('hex')
         const { $shared, $index } = state
-        const { port } = peer.address()
+        const port = peer.conf.dht_port
         $shared.cfg[$index] = { host: ip, port }
         $shared.topics[$index] = topic
-        next(null, { ...state, topic })
+        next(null, { ...state, topic, port })
       },
-      run (t, peer, { topic, $index }, done) {
-        peer.announce(topic, (err) => {
+      run (t, peer, { topic, $index, port }, done) {
+        peer.announce(topic, port, (err) => {
           try {
             t.error(err, 'no announce error')
           } finally {
@@ -63,7 +63,7 @@ tapenet(`${lookups.length} lookup peers, ${announcers.length} announcing peers (
       options: { ephemeral: false },
       ready (t, peer, state, next) {
         const { $shared, $index, announcerCount } = state
-        const { port } = peer.address()
+        const port = peer.conf.dht_port
         $shared.cfg[$index + announcerCount] = { host: ip, port }
         next(null, state)
       },
