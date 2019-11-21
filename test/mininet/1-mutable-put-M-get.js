@@ -15,7 +15,8 @@ const {
 
 tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per peer`, (t) => {
   const state = {
-    rts: +RTS
+    rts: +RTS,
+    $shared: {}
   }
   const scenario = [
     {
@@ -26,9 +27,6 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
         const keypair = ed.createKeyPair(ed.createSeed())
         const { publicKey: key } = keypair
         const value = crypto.randomBytes(32).toString('hex')
-        // const sig = ed.sign(
-        //   Buffer.from(value), keypair.publicKey, keypair.secretKey
-        // )
         const sign = (buf) => {
           return ed.sign(
             buf, keypair.publicKey, keypair.secretKey
@@ -36,8 +34,9 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
         }
         next(null, { ...state, key, value, sign })
       },
-      run (t, peer, { key, value, sign }, done) {
-        peer.put({ k: key, v: value, sign, seq: 0 }, (err, key) => {
+      run (t, peer, { key, value, sign, $shared }, done) {
+        peer.put({ k: key, v: value, sign, seq: 0 }, (err, hash) => {
+          $shared.hash = hash
           try {
             t.error(err, 'no put error')
           } finally {
@@ -49,7 +48,7 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
     {
       containers: getters,
       options: { ephemeral: false },
-      run (t, peer, { rts, key, value }, done) {
+      run (t, peer, { rts, key, value, $shared }, done) {
         const started = Date.now()
         gets(rts)
         function gets (n) {
@@ -58,12 +57,11 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
             done()
             return
           }
-          peer.get({ hash: key }, (err, result) => {
+          peer.get({ hash: $shared.hash }, (err, result) => {
             try {
               t.error(err, 'no get error')
               if (err) return
-              console.trace(result)
-              // t.is(result.v, value)
+              t.is(result.v, value)
             } finally {
               gets(n - 1)
             }
