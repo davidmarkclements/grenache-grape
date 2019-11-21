@@ -48,7 +48,7 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
     {
       containers: getters,
       options: { ephemeral: false },
-      run (t, peer, { rts, key, value, $shared }, done) {
+      run (t, peer, { rts, value, $shared }, done) {
         const started = Date.now()
         gets(rts)
         function gets (n) {

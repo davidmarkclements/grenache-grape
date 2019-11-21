@@ -29,29 +29,31 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
       containers: putters,
       ready (t, peer, state, next) {
         const crypto = require('crypto')
-        const hypersign = require('@hyperswarm/hypersign')()
-        const keypair = hypersign.keypair()
+        const ed = require('ed25519-supercop')
+        const keypair = ed.createKeyPair(ed.createSeed())
         const { publicKey: key } = keypair
         const value = crypto.randomBytes(32).toString('hex')
         const { $shared, $index } = state
-        const sig = hypersign.sign(Buffer.from(value), {
-          keypair
-        })
-        $shared.kv[$index] = { sig, key, value }
-        next(null, { ...state, key, value, sig })
-      },
-      run (t, peer, { key, value, sig }, done) {
-        peer.put({ k: key, v: value, sig }, (err) => {
+        const sign = (buf) => {
+          return ed.sign(
+            buf, keypair.publicKey, keypair.secretKey
+          )
+        }
+        $shared.kv[$index] = { key, value }
+        peer.put({ k: key, v: value, sign, seq: 0 }, (err, hash) => {
+          $shared.kv[$index].hash = hash
+          console.log($shared.kv[$index])
           t.error(err, 'no announce error')
-          done()
+          next(null, { ...state, key, value, sign })
         })
-      }
+        
+      },
     },
     {
       containers: getters,
       options: { ephemeral: false },
       run (t, peer, { rts, $shared, $index }, done) {
-        const { key, value } = $shared.kv[$index]
+        const { hash, value } = $shared.kv[$index]
         const started = Date.now()
         gets(rts)
         function gets (n) {
@@ -60,7 +62,7 @@ tapenet(`1 mutable put peer, ${NODES - 2} mutable get peers, ${RTS} gets per pee
             done()
             return
           }
-          peer.get({ key }, (err, { v } = {}) => {
+          peer.get({ hash }, (err, { v } = {}) => {
             try {
               t.error(err, 'no get error')
               if (err) return
