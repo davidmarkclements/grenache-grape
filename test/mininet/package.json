@@ -7,6 +7,7 @@
     "grenache-nodejs-http": "^0.7.1",
     "grenache-nodejs-link": "bitfinexcom/grenache-nodejs-link",
     "lodash.mergewith": "^4.6.2",
+    "nonsynchronous": "^1.2.0",
     "tapenet": "^1.4.0"
   },
   "scripts": {
